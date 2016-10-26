@@ -14,7 +14,6 @@ namespace LibGit2Sharp
         /// Initializes a new instance of the <see cref="Filter"/> class.
         /// And allocates the filter natively.
         /// <param name="name">The unique name with which this filtered is registered with</param>
-        /// <param name="attributes">A list of attributes which this filter applies to</param>
         /// </summary>
         protected MergeDriver(string name)
         {
@@ -160,12 +159,12 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
-        /// The marshalled filter
+        /// The marshalled merge driver
         /// </summary>
         internal GitMergeDriver GitMergeDriver { get; private set;}
 
         /// <summary>
-        /// The name that this filter was registered with
+        /// The name that this merge driver was registered with
         /// </summary>
         public string Name { get; private set; }
     }

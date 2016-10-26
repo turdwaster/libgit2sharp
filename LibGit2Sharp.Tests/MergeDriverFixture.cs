@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 using LibGit2Sharp.Tests.TestHelpers;
 using Xunit;
-using System.Threading.Tasks;
 
 namespace LibGit2Sharp.Tests
 {
-    public class MergeDriverFixture
+    public class MergeDriverFixture : BaseFixture
     {
         private const string MergeDriverName = "the-merge-driver";
 
@@ -63,80 +60,74 @@ namespace LibGit2Sharp.Tests
             }
         }
 
-        //[Fact]
-        //public void InitCallbackMadeWhenUsingTheFilter()
-        //{
-        //    bool called = false;
-        //    Action initializeCallback = () =>
-        //    {
-        //        called = true;
-        //    };
+        [Fact]
+        public void WhenMergingApplyIsCalledWhenThereIsAConflict()
+        {
+            string repoPath = InitNewRepository();
+            bool called = false;
 
-        //    var filter = new FakeFilter(FilterName,
-        //                                attributes,
-        //                                successCallback,
-        //                                successCallback,
-        //                                initializeCallback);
-        //    var registration = GlobalSettings.RegisterFilter(filter);
+            Action<MergeDriverSource> apply = (source) =>
+            {
+                called = true;
+            };
 
-        //    try
-        //    {
-        //        Assert.False(called);
+            var mergeDriver = new FakeMergeDriver(MergeDriverName, applyCallback: apply);
+            var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
-        //        string repoPath = InitNewRepository();
-        //        using (var repo = CreateTestRepository(repoPath))
-        //        {
-        //            StageNewFile(repo);
-        //            Assert.True(called);
-        //        }
-        //    }
-        //    finally
-        //    {
-        //        GlobalSettings.DeregisterFilter(registration);
-        //    }
-        //}
+            //string attributesPath = Path.Combine(Directory.GetParent(repoPath).Parent.FullName, ".gitattributes");
+            //FileInfo attributesFile = new FileInfo(attributesPath);
 
-        //[Fact]
-        //public void WhenStagingFileApplyIsCalledWithCleanForCorrectPath()
-        //{
-        //    string repoPath = InitNewRepository();
-        //    bool called = false;
+            try
+            {
+                using (var repo = CreateTestRepository(repoPath))
+                {
+                    //CreateConfigurationWithDummyUser(repo, Constants.Identity);
+                    //File.WriteAllText(attributesPath, "*.atom merge=test");
+                    //Commands.Stage(repo, attributesFile.Name);
 
-        //    Action<Stream, Stream> clean = (reader, writer) =>
-        //    {
-        //        called = true;
-        //        reader.CopyTo(writer);
-        //    };
+                    string newFilePath = Touch(repo.Info.WorkingDirectory, Guid.NewGuid() + ".atom", "file1");
+                    var stageNewFile = new FileInfo(newFilePath);
+                    Commands.Stage(repo, newFilePath);
+                    repo.Commit("Commit", Constants.Signature, Constants.Signature);
 
-        //    var filter = new FakeFilter(FilterName, attributes, clean);
-        //    var registration = GlobalSettings.RegisterFilter(filter);
+                    var branch = repo.CreateBranch("second");
 
-        //    try
-        //    {
-        //        using (var repo = CreateTestRepository(repoPath))
-        //        {
-        //            StageNewFile(repo);
-        //            Assert.True(called);
-        //        }
-        //    }
-        //    finally
-        //    {
-        //        GlobalSettings.DeregisterFilter(registration);
-        //    }
-        //}
+                    var id = Guid.NewGuid() + ".atom";
+                    newFilePath = Touch(repo.Info.WorkingDirectory, id, "file2");
+                    stageNewFile = new FileInfo(newFilePath);
+                    Commands.Stage(repo, newFilePath);
+                    repo.Commit("Commit in master", Constants.Signature, Constants.Signature);
+
+                    Commands.Checkout(repo, branch.FriendlyName);
+
+                    newFilePath = Touch(repo.Info.WorkingDirectory, id, "file3");
+                    stageNewFile = new FileInfo(newFilePath);
+                    Commands.Stage(repo, newFilePath);
+                    repo.Commit("Commit in second branch", Constants.Signature, Constants.Signature);
+
+                    var result = repo.Merge("master", Constants.Signature, new MergeOptions { CommitOnSuccess = false });
+
+                    Assert.True(called);
+                }
+            }
+            finally
+            {
+                GlobalSettings.DeregisterMergeDriver(registration);
+            }
+        }
 
         //[Fact]
-        //public void CleanFilterWritesOutputToObjectTree()
+        //public void CleanMergeDriverWritesOutputToObjectTree()
         //{
         //    const string decodedInput = "This is a substitution cipher";
         //    const string encodedInput = "Guvf vf n fhofgvghgvba pvcure";
 
         //    string repoPath = InitNewRepository();
 
-        //    Action<Stream, Stream> cleanCallback = SubstitutionCipherFilter.RotateByThirteenPlaces;
+        //    Action<Stream, Stream> cleanCallback = SubstitutionCipherMergeDriver.RotateByThirteenPlaces;
 
-        //    var filter = new FakeFilter(FilterName, attributes, cleanCallback);
-        //    var registration = GlobalSettings.RegisterFilter(filter);
+        //    var mergeDriver = new FakeMergeDriver(MergeDriverName, attributes, cleanCallback);
+        //    var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
         //    try
         //    {
@@ -152,7 +143,7 @@ namespace LibGit2Sharp.Tests
         //    }
         //    finally
         //    {
-        //        GlobalSettings.DeregisterFilter(registration);
+        //        GlobalSettings.DeregisterMergeDriver(registration);
         //    }
         //}
 
@@ -164,10 +155,10 @@ namespace LibGit2Sharp.Tests
 
         //    const string branchName = "branch";
 
-        //    Action<Stream, Stream> smudgeCallback = SubstitutionCipherFilter.RotateByThirteenPlaces;
+        //    Action<Stream, Stream> smudgeCallback = SubstitutionCipherMergeDriver.RotateByThirteenPlaces;
 
-        //    var filter = new FakeFilter(FilterName, attributes, null, smudgeCallback);
-        //    var registration = GlobalSettings.RegisterFilter(filter);
+        //    var mergeDriver = new FakeMergeDriver(MergeDriverName, attributes, null, smudgeCallback);
+        //    var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
         //    try
         //    {
@@ -195,7 +186,7 @@ namespace LibGit2Sharp.Tests
         //    }
         //    finally
         //    {
-        //        GlobalSettings.DeregisterFilter(registration);
+        //        GlobalSettings.DeregisterMergeDriver(registration);
         //    }
         //}
 
@@ -208,10 +199,10 @@ namespace LibGit2Sharp.Tests
         //    const string branchName = "branch";
         //    string repoPath = InitNewRepository();
 
-        //    Action<Stream, Stream> smudgeCallback = SubstitutionCipherFilter.RotateByThirteenPlaces;
+        //    Action<Stream, Stream> smudgeCallback = SubstitutionCipherMergeDriver.RotateByThirteenPlaces;
 
-        //    var filter = new FakeFilter(FilterName, attributes, null, smudgeCallback);
-        //    var registration = GlobalSettings.RegisterFilter(filter);
+        //    var mergeDriver = new FakeMergeDriver(MergeDriverName, attributes, null, smudgeCallback);
+        //    var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
         //    try
         //    {
@@ -223,12 +214,12 @@ namespace LibGit2Sharp.Tests
         //    }
         //    finally
         //    {
-        //        GlobalSettings.DeregisterFilter(registration);
+        //        GlobalSettings.DeregisterMergeDriver(registration);
         //    }
         //}
 
         //[Fact]
-        //public void CanFilterLargeFiles()
+        //public void CanMergeDriverLargeFiles()
         //{
         //    const int ContentLength = 128 * 1024 * 1024 - 13;
         //    const char ContentValue = 'x';
@@ -237,8 +228,8 @@ namespace LibGit2Sharp.Tests
 
         //    string repoPath = InitNewRepository();
 
-        //    var filter = new FileExportFilter(FilterName, attributes);
-        //    var registration = GlobalSettings.RegisterFilter(filter);
+        //    var mergeDriver = new FileExportMergeDriver(MergeDriverName, attributes);
+        //    var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
         //    try
         //    {
@@ -262,7 +253,7 @@ namespace LibGit2Sharp.Tests
         //        using (Repository repo = new Repository(repoPath))
         //        {
         //            CreateConfigurationWithDummyUser(repo, Constants.Identity);
-        //            File.WriteAllText(attributesPath, "*.blob filter=test");
+        //            File.WriteAllText(attributesPath, "*.blob merge=test");
         //            Commands.Stage(repo, attributesFile.Name);
         //            Commands.Stage(repo, contentFile.Name);
         //            repo.Commit("test", Constants.Signature, Constants.Signature);
@@ -290,32 +281,32 @@ namespace LibGit2Sharp.Tests
         //    }
         //    finally
         //    {
-        //        GlobalSettings.DeregisterFilter(registration);
+        //        GlobalSettings.DeregisterMergeDriver(registration);
         //    }
         //}
 
         //[Fact]
         //public void DoubleRegistrationFailsButDoubleDeregistrationDoesNot()
         //{
-        //    Assert.Equal(0, GlobalSettings.GetRegisteredFilters().Count());
+        //    Assert.Equal(0, GlobalSettings.GetRegisteredMergeDrivers().Count());
 
-        //    var filter = new EmptyFilter(FilterName, attributes);
-        //    var registration = GlobalSettings.RegisterFilter(filter);
+        //    var filter = new EmptyMergeDriver(MergeDriverName, attributes);
+        //    var registration = GlobalSettings.RegisterMergeDriver(filter);
 
-        //    Assert.Throws<EntryExistsException>(() => { GlobalSettings.RegisterFilter(filter); });
-        //    Assert.Equal(1, GlobalSettings.GetRegisteredFilters().Count());
+        //    Assert.Throws<EntryExistsException>(() => { GlobalSettings.RegisterMergeDriver(filter); });
+        //    Assert.Equal(1, GlobalSettings.GetRegisteredMergeDrivers().Count());
 
-        //    Assert.True(registration.IsValid, "FilterRegistration.IsValid should be true.");
+        //    Assert.True(registration.IsValid, "MergeDriverRegistration.IsValid should be true.");
 
-        //    GlobalSettings.DeregisterFilter(registration);
-        //    Assert.Equal(0, GlobalSettings.GetRegisteredFilters().Count());
+        //    GlobalSettings.DeregisterMergeDriver(registration);
+        //    Assert.Equal(0, GlobalSettings.GetRegisteredMergeDrivers().Count());
 
-        //    Assert.False(registration.IsValid, "FilterRegistration.IsValid should be false.");
+        //    Assert.False(registration.IsValid, "MergeDriverRegistration.IsValid should be false.");
 
-        //    GlobalSettings.DeregisterFilter(registration);
-        //    Assert.Equal(0, GlobalSettings.GetRegisteredFilters().Count());
+        //    GlobalSettings.DeregisterMergeDriver(registration);
+        //    Assert.Equal(0, GlobalSettings.GetRegisteredMergeDrivers().Count());
 
-        //    Assert.False(registration.IsValid, "FilterRegistration.IsValid should be false.");
+        //    Assert.False(registration.IsValid, "MergeDriverRegistration.IsValid should be false.");
         //}
 
         //private unsafe bool CharArrayAreEqual(char[] array1, char[] array2, int count)
@@ -382,31 +373,31 @@ namespace LibGit2Sharp.Tests
         //    return expectedPath;
         //}
 
-        //private static FileInfo CommitFileOnBranch(Repository repo, string branchName, String content)
-        //{
-        //    var branch = repo.CreateBranch(branchName);
-        //    Commands.Checkout(repo, branch.FriendlyName);
+        private static FileInfo CommitFileOnBranch(Repository repo, string branchName, String content)
+        {
+            var branch = repo.CreateBranch(branchName);
+            Commands.Checkout(repo, branch.FriendlyName);
 
-        //    FileInfo expectedPath = StageNewFile(repo, content);
-        //    repo.Commit("Commit", Constants.Signature, Constants.Signature);
-        //    return expectedPath;
-        //}
+            FileInfo expectedPath = StageNewFile(repo, content);
+            repo.Commit("Commit", Constants.Signature, Constants.Signature);
+            return expectedPath;
+        }
 
-        //private static FileInfo StageNewFile(IRepository repo, string contents = "null")
-        //{
-        //    string newFilePath = Touch(repo.Info.WorkingDirectory, Guid.NewGuid() + ".txt", contents);
-        //    var stageNewFile = new FileInfo(newFilePath);
-        //    Commands.Stage(repo, newFilePath);
-        //    return stageNewFile;
-        //}
+        private static FileInfo StageNewFile(IRepository repo, string contents = "null")
+        {
+            string newFilePath = Touch(repo.Info.WorkingDirectory, Guid.NewGuid() + ".txt", contents);
+            var stageNewFile = new FileInfo(newFilePath);
+            Commands.Stage(repo, newFilePath);
+            return stageNewFile;
+        }
 
-        //private Repository CreateTestRepository(string path)
-        //{
-        //    var repository = new Repository(path);
-        //    CreateConfigurationWithDummyUser(repository, Constants.Identity);
-        //    CreateAttributesFile(repository, "* filter=test");
-        //    return repository;
-        //}
+        private Repository CreateTestRepository(string path)
+        {
+            var repository = new Repository(path);
+            CreateConfigurationWithDummyUser(repository, Constants.Identity);
+            CreateAttributesFile(repository, "* merge=the-merge-driver");
+            return repository;
+        }
 
         class EmptyMergeDriver : MergeDriver
         {
@@ -428,11 +419,13 @@ namespace LibGit2Sharp.Tests
         class FakeMergeDriver : MergeDriver
         {
             private readonly Action initCallback;
+            private readonly Action<MergeDriverSource> applyCallback;
 
-            public FakeMergeDriver(string name, Action initCallback = null)
+            public FakeMergeDriver(string name, Action initCallback = null, Action<MergeDriverSource> applyCallback = null)
                 : base(name)
             {
                 this.initCallback = initCallback;
+                this.applyCallback = applyCallback;
             }
 
             protected override void Initialize()
@@ -442,10 +435,13 @@ namespace LibGit2Sharp.Tests
                     initCallback();
                 }
             }
-
             protected override int Apply(MergeDriverSource source)
             {
-                throw new NotImplementedException();
+                if (applyCallback != null)
+                {
+                    applyCallback(source);
+                }
+                return 0;
             }
         }
     }

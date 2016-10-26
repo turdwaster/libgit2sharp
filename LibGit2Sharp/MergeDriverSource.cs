@@ -23,10 +23,6 @@ namespace LibGit2Sharp
             TheirsId = theirsId;
         }
 
-        internal unsafe MergeDriverSource(git_merge_driver_source* source)
-        {
-        }
-
         /// <summary>
         /// Take an unmanaged pointer and convert it to filter source callback paramater
         /// </summary>
@@ -43,7 +39,7 @@ namespace LibGit2Sharp
         /// <param name="ptr"></param>
         /// <returns></returns>
         internal static unsafe MergeDriverSource FromNativePtr(git_merge_driver_source* ptr)
-        {       
+        {
             var ancestorId = ptr->ancestor->id;
             var oursId = ptr->ours->id;
             var theirsId = ptr->theirs->id;
@@ -51,7 +47,7 @@ namespace LibGit2Sharp
             var ancestorContent = ObjectId.BuildFromPtr(&ancestorId);
             var oursContent = ObjectId.BuildFromPtr(&oursId);
             var theirsContent = ObjectId.BuildFromPtr(&theirsId);
-           
+
             return new MergeDriverSource(ancestorContent, oursContent, theirsContent);
         }
     }

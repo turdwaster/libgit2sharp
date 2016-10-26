@@ -9,8 +9,7 @@ namespace LibGit2Sharp
         /// <summary>
         ///
         /// </summary>
-        /// <param name="filter"></param>
-        /// <param name="priority"></param>
+        /// <param name="driver"></param>
         internal MergeDriverRegistration(MergeDriver driver)
         {
             System.Diagnostics.Debug.Assert(driver != null);
