@@ -13,6 +13,7 @@ namespace LibGit2Sharp
     {
         private static readonly Lazy<Version> version = new Lazy<Version>(Version.Build);
         private static readonly Dictionary<Filter, FilterRegistration> registeredFilters;
+        private static readonly Dictionary<MergeDriver, MergeDriverRegistration> registeredMergeDrivers;
 
         private static LogConfiguration logConfiguration = LogConfiguration.None;
 
@@ -33,7 +34,7 @@ namespace LibGit2Sharp
                 if (managedPath == null)
                 {
                     managedPath = Assembly.GetExecutingAssembly().Location;
-                }
+            }
                 else if (managedPath.StartsWith("file:///"))
                 {
                     managedPath = managedPath.Substring(8).Replace('/', '\\');
@@ -49,6 +50,7 @@ namespace LibGit2Sharp
             }
 
             registeredFilters = new Dictionary<Filter, FilterRegistration>();
+            registeredMergeDrivers = new Dictionary<MergeDriver, MergeDriverRegistration>();
         }
 
         /// <summary>
@@ -295,6 +297,31 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
+        /// Registers a <see cref="MergeDriver"/> to be invoked when <see cref="MergeDriver.Name"/> matches .gitattributes 'merge=name'
+        /// </summary>
+        /// <param name="mergeDriver">The merge driver to be invoked at run time.</param>
+        /// <returns>A <see cref="MergeDriverRegistration"/> object used to manage the lifetime of the registration.</returns>
+        public static MergeDriverRegistration RegisterMergeDriver(MergeDriver mergeDriver)
+        {
+            Ensure.ArgumentNotNull(mergeDriver, "merge-driver");
+
+            lock (registeredMergeDrivers)
+            {
+                // if the filter has already been registered
+                if (registeredMergeDrivers.ContainsKey(mergeDriver))
+                {
+                    throw new EntryExistsException("The merge driver has already been registered.", GitErrorCode.Exists, GitErrorCategory.MergeDriver);
+                }
+
+                // allocate the registration object
+                var registration = new MergeDriverRegistration(mergeDriver);
+                // add the filter and registration object to the global tracking list
+                registeredMergeDrivers.Add(mergeDriver, registration);
+                return registration;
+            }
+        }
+
+        /// <summary>
         /// Get the paths under which libgit2 searches for the configuration file of a given level.
         /// </summary>
         /// <param name="level">The level (global/system/XDG) of the config.</param>
@@ -351,6 +378,42 @@ namespace LibGit2Sharp
         public static void SetEnableStrictObjectCreation(bool enabled)
         {
             Proxy.git_libgit2_opts_set_enable_strictobjectcreation(enabled);
+        }
+
+        /// <summary>
+        /// Unregisters the associated merge driver.
+        /// </summary>
+        /// <param name="registration">Registration object with an associated merge driver.</param>
+        public static void DeregisterMergeDriver(MergeDriverRegistration registration)
+        {
+            Ensure.ArgumentNotNull(registration, "registration");
+
+            lock (registeredFilters)
+            {
+                var driver = registration.MergeDriver;
+
+                // do nothing if the filter isn't registered
+                if (registeredMergeDrivers.ContainsKey(driver))
+                {
+                    // remove the register from the global tracking list
+                    registeredMergeDrivers.Remove(driver);
+                    // clean up native allocations
+                    registration.Free();
+                }
+            }
+        }
+
+        internal static void DeregisterMergeDriver(MergeDriver driver)
+        {
+            System.Diagnostics.Debug.Assert(driver != null);
+
+            // do nothing if the filter isn't registered
+            if (registeredMergeDrivers.ContainsKey(driver))
+            {
+                var registration = registeredMergeDrivers[driver];
+                // unregister the filter
+                DeregisterMergeDriver(registration);
+            }
         }
     }
 }

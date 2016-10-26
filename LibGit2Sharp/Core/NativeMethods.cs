@@ -796,6 +796,17 @@ namespace LibGit2Sharp.Core
             ref GitMergeOpts merge_opts,
             ref GitCheckoutOpts checkout_opts);
 
+
+        [DllImport(libgit2)]
+        internal static extern int git_merge_driver_register(
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalCookie = UniqueId.UniqueIdentifier, MarshalTypeRef = typeof(StrictUtf8Marshaler))] string name,
+            IntPtr gitMergeDriver);
+
+        [DllImport(libgit2)]
+        internal static extern int git_merge_driver_unregister(
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalCookie = UniqueId.UniqueIdentifier, MarshalTypeRef = typeof(StrictUtf8Marshaler))]string name);
+
+
         [DllImport(libgit2)]
         internal static extern unsafe int git_merge_commits(
             out git_index* index,

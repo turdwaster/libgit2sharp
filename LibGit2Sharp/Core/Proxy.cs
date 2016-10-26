@@ -924,6 +924,25 @@ namespace LibGit2Sharp.Core
 
         #endregion
 
+        #region git_merge_driver_
+        public static void git_merge_driver_register(string name, IntPtr mergeDriverPtr)
+        {
+            int res = NativeMethods.git_merge_driver_register(name, mergeDriverPtr);
+            if (res == (int)GitErrorCode.Exists)
+            {
+                throw new EntryExistsException("A merge driver with the name '{0}' is already registered", name);
+            }
+            Ensure.ZeroResult(res);
+        }
+
+        public static void git_merge_driver_unregister(string name)
+        {
+            int res = NativeMethods.git_merge_driver_unregister(name);
+            Ensure.ZeroResult(res);
+        }
+
+        #endregion
+
         #region git_filter_
 
         public static void git_filter_register(string name, IntPtr filterPtr, int priority)
