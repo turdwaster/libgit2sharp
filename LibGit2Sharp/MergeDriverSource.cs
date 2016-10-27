@@ -40,15 +40,18 @@ namespace LibGit2Sharp
         /// <returns></returns>
         internal static unsafe MergeDriverSource FromNativePtr(git_merge_driver_source* ptr)
         {
-            var ancestorId = ptr->ancestor->id;
-            var oursId = ptr->ours->id;
-            var theirsId = ptr->theirs->id;
+            if (ptr == null)
+                throw new ArgumentException();
 
-            var ancestorContent = ObjectId.BuildFromPtr(&ancestorId);
-            var oursContent = ObjectId.BuildFromPtr(&oursId);
-            var theirsContent = ObjectId.BuildFromPtr(&theirsId);
+            var ancestor = ptr->ancestor;
+            var ours = ptr->ours;
+            var theirs = ptr->theirs;
 
-            return new MergeDriverSource(ancestorContent, oursContent, theirsContent);
+            var ancestorId = ancestor == null ? null : ObjectId.BuildFromPtr(&ancestor->id);
+            var oursId = ours == null ? null : ObjectId.BuildFromPtr(&ours->id);
+            var theirsId = theirs == null ? null : ObjectId.BuildFromPtr(&theirs->id);
+
+            return new MergeDriverSource(ancestorId, oursId, theirsId);
         }
     }
 }

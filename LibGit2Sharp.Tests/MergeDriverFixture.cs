@@ -66,25 +66,19 @@ namespace LibGit2Sharp.Tests
             string repoPath = InitNewRepository();
             bool called = false;
 
-            Action<MergeDriverSource> apply = (source) =>
+            Func<MergeDriverSource, MergeStatus> apply = (source) =>
             {
                 called = true;
+                return MergeStatus.UpToDate;
             };
 
             var mergeDriver = new FakeMergeDriver(MergeDriverName, applyCallback: apply);
             var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
-            //string attributesPath = Path.Combine(Directory.GetParent(repoPath).Parent.FullName, ".gitattributes");
-            //FileInfo attributesFile = new FileInfo(attributesPath);
-
             try
             {
                 using (var repo = CreateTestRepository(repoPath))
                 {
-                    //CreateConfigurationWithDummyUser(repo, Constants.Identity);
-                    //File.WriteAllText(attributesPath, "*.atom merge=test");
-                    //Commands.Stage(repo, attributesFile.Name);
-
                     string newFilePath = Touch(repo.Info.WorkingDirectory, Guid.NewGuid() + ".atom", "file1");
                     var stageNewFile = new FileInfo(newFilePath);
                     Commands.Stage(repo, newFilePath);
@@ -405,7 +399,7 @@ namespace LibGit2Sharp.Tests
                 : base(name)
             { }
 
-            protected override int Apply(MergeDriverSource source)
+            protected override MergeStatus Apply(MergeDriverSource source)
             {
                 throw new NotImplementedException();
             }
@@ -419,9 +413,9 @@ namespace LibGit2Sharp.Tests
         class FakeMergeDriver : MergeDriver
         {
             private readonly Action initCallback;
-            private readonly Action<MergeDriverSource> applyCallback;
+            private readonly Func<MergeDriverSource, MergeStatus> applyCallback;
 
-            public FakeMergeDriver(string name, Action initCallback = null, Action<MergeDriverSource> applyCallback = null)
+            public FakeMergeDriver(string name, Action initCallback = null, Func<MergeDriverSource, MergeStatus> applyCallback = null)
                 : base(name)
             {
                 this.initCallback = initCallback;
@@ -435,13 +429,11 @@ namespace LibGit2Sharp.Tests
                     initCallback();
                 }
             }
-            protected override int Apply(MergeDriverSource source)
+            protected override MergeStatus Apply(MergeDriverSource source)
             {
                 if (applyCallback != null)
-                {
-                    applyCallback(source);
-                }
-                return 0;
+                    return applyCallback(source);
+                return MergeStatus.UpToDate;
             }
         }
     }

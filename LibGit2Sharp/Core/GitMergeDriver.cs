@@ -11,15 +11,15 @@ namespace LibGit2Sharp.Core
     {
         /** The `version` should be set to `GIT_MERGE_DRIVER_VERSION`. */
         public uint version;
-        
+
         /** Called when the merge driver is first used for any file. */
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public git_merge_driver_init_fn initialize;
-        
+
         /** Called when the merge driver is unregistered from the system. */
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public git_merge_driver_shutdown_fn shutdown;
-        
+
         /**
          * Called to merge the contents of a conflict.  If this function
          * returns `GIT_PASSTHROUGH` then the default (`text`) merge driver
@@ -32,12 +32,12 @@ namespace LibGit2Sharp.Core
         internal delegate int git_merge_driver_init_fn(IntPtr merge_driver);
         internal delegate void git_merge_driver_shutdown_fn(IntPtr merge_driver);
         internal delegate int git_merge_driver_apply_fn(
-            GitMergeDriver merge_driver,
+            IntPtr merge_driver,
             IntPtr path_out,
             IntPtr mode_out,
             IntPtr merged_out,// GitBuf merged_out,
-            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalCookie = UniqueId.UniqueIdentifier, MarshalTypeRef = typeof(StrictUtf8Marshaler))] string filter_name,
-            IntPtr git_merge_driver_source // const git_merge_driver_source *src
+            IntPtr filter_name,
+            IntPtr merge_driver_source // const git_merge_driver_source *src
         );
     }
 
@@ -53,6 +53,6 @@ namespace LibGit2Sharp.Core
 
 	    public git_index_entry* ancestor;
         public git_index_entry* ours;
-        public git_index_entry* theirs;    
+        public git_index_entry* theirs;
     }
 }

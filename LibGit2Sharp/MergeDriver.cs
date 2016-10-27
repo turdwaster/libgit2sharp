@@ -68,7 +68,7 @@ namespace LibGit2Sharp
         ///
         /// The `src` contains the data about the file to be merged.
         /// </summary>
-        protected abstract int Apply(MergeDriverSource source);
+        protected abstract MergeStatus Apply(MergeDriverSource source);
 
         /// <summary>
         /// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Filter"/>.
@@ -148,14 +148,23 @@ namespace LibGit2Sharp
             return result;
         }
 
-        int ApplyMergeCallback(GitMergeDriver merge_driver, IntPtr path_out, IntPtr mode_out, IntPtr merged_out, string filter_name, IntPtr git_merge_driver_source)
+        int ApplyMergeCallback(IntPtr merge_driver, IntPtr path_out, IntPtr mode_out, IntPtr merged_out, IntPtr filter_name, IntPtr merge_driver_source)
         {
             MergeDriverSource mergeDriverSource;
-            mergeDriverSource = MergeDriverSource.FromNativePtr(git_merge_driver_source);
-            var result = Apply(mergeDriverSource);
-            //merged_out = result;
-            // TODO: populate merged_out with the results for the apply callback
-            return mergeDriverSource != null ? 0 : -1;
+            try
+            {
+                mergeDriverSource = MergeDriverSource.FromNativePtr(merge_driver_source);
+                var result = Apply(mergeDriverSource);
+                //merged_out = result;
+                // TODO: populate merged_out with the results for the apply callback
+                // TODO: return 0 if merge was successful
+            }
+            catch(Exception)
+            {
+                return (int)GitErrorCode.Invalid;
+            }
+
+            return (int)GitErrorCode.MergeConflict;
         }
 
         /// <summary>
