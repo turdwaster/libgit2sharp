@@ -9,6 +9,7 @@ namespace LibGit2Sharp
     /// </summary>
     public class MergeDriverSource
     {
+        public Repository Repository;
         public ObjectId AncestorId;
         public ObjectId OurId;
         public ObjectId TheirsId;
@@ -16,8 +17,9 @@ namespace LibGit2Sharp
         /// <summary>
         /// Needed for mocking purposes
         /// </summary>
-        protected MergeDriverSource(ObjectId ancestorId, ObjectId oursId, ObjectId theirsId)
+        protected MergeDriverSource(Repository repos, ObjectId ancestorId, ObjectId oursId, ObjectId theirsId)
         {
+            Repository = repos;
             AncestorId = ancestorId;
             OurId = oursId;
             TheirsId = theirsId;
@@ -46,12 +48,15 @@ namespace LibGit2Sharp
             var ancestor = ptr->ancestor;
             var ours = ptr->ours;
             var theirs = ptr->theirs;
+            var repoPtr = ptr->repository;
+
+            var repo = new Repository(new RepositoryHandle(repoPtr, false));
 
             var ancestorId = ancestor == null ? null : ObjectId.BuildFromPtr(&ancestor->id);
             var oursId = ours == null ? null : ObjectId.BuildFromPtr(&ours->id);
             var theirsId = theirs == null ? null : ObjectId.BuildFromPtr(&theirs->id);
 
-            return new MergeDriverSource(ancestorId, oursId, theirsId);
+            return new MergeDriverSource(repo, ancestorId, oursId, theirsId);
         }
     }
 }

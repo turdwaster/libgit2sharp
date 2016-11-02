@@ -66,10 +66,10 @@ namespace LibGit2Sharp.Tests
             string repoPath = InitNewRepository();
             bool called = false;
 
-            Func<MergeDriverSource, MergeStatus> apply = (source) =>
+            Func<MergeDriverSource, MergeDriverResult> apply = (source) =>
             {
                 called = true;
-                return MergeStatus.UpToDate;
+                return new MergeDriverResult { Status = MergeStatus.UpToDate };
             };
 
             var mergeDriver = new FakeMergeDriver(MergeDriverName, applyCallback: apply);
@@ -110,36 +110,54 @@ namespace LibGit2Sharp.Tests
             }
         }
 
-        //[Fact]
-        //public void CleanMergeDriverWritesOutputToObjectTree()
-        //{
-        //    const string decodedInput = "This is a substitution cipher";
-        //    const string encodedInput = "Guvf vf n fhofgvghgvba pvcure";
+        [Fact]
+        public void MergeDriverCanFetchFileContents()
+        {
+            string repoPath = InitNewRepository();
 
-        //    string repoPath = InitNewRepository();
+            Func <MergeDriverSource, MergeDriverResult> apply = (source) =>
+            {
+                var repos = source.Repository;
+                var blob = repos.Lookup<Blob>(source.TheirsId);
+                var content = blob.GetContentStream();
+                return new MergeDriverResult { Status = MergeStatus.UpToDate, Content = content };
+            };
 
-        //    Action<Stream, Stream> cleanCallback = SubstitutionCipherMergeDriver.RotateByThirteenPlaces;
+            var mergeDriver = new FakeMergeDriver(MergeDriverName, applyCallback: apply);
+            var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
-        //    var mergeDriver = new FakeMergeDriver(MergeDriverName, attributes, cleanCallback);
-        //    var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
+            try
+            {
+                using (var repo = CreateTestRepository(repoPath))
+                {
+                    string newFilePath = Touch(repo.Info.WorkingDirectory, Guid.NewGuid() + ".atom", "file1");
+                    var stageNewFile = new FileInfo(newFilePath);
+                    Commands.Stage(repo, newFilePath);
+                    repo.Commit("Commit", Constants.Signature, Constants.Signature);
 
-        //    try
-        //    {
-        //        using (var repo = CreateTestRepository(repoPath))
-        //        {
-        //            FileInfo expectedFile = StageNewFile(repo, decodedInput);
-        //            var commit = repo.Commit("Clean that file", Constants.Signature, Constants.Signature);
-        //            var blob = (Blob)commit.Tree[expectedFile.Name].Target;
+                    var branch = repo.CreateBranch("second");
 
-        //            var textDetected = blob.GetContentText();
-        //            Assert.Equal(encodedInput, textDetected);
-        //        }
-        //    }
-        //    finally
-        //    {
-        //        GlobalSettings.DeregisterMergeDriver(registration);
-        //    }
-        //}
+                    var id = Guid.NewGuid() + ".atom";
+                    newFilePath = Touch(repo.Info.WorkingDirectory, id, "file2");
+                    stageNewFile = new FileInfo(newFilePath);
+                    Commands.Stage(repo, newFilePath);
+                    repo.Commit("Commit in master", Constants.Signature, Constants.Signature);
+
+                    Commands.Checkout(repo, branch.FriendlyName);
+
+                    newFilePath = Touch(repo.Info.WorkingDirectory, id, "file3");
+                    stageNewFile = new FileInfo(newFilePath);
+                    Commands.Stage(repo, newFilePath);
+                    repo.Commit("Commit in second branch", Constants.Signature, Constants.Signature);
+
+                    var result = repo.Merge("master", Constants.Signature, new MergeOptions { CommitOnSuccess = false });
+                }
+            }
+            finally
+            {
+                GlobalSettings.DeregisterMergeDriver(registration);
+            }
+        }
 
         //[Fact]
         //public void CanHandleMultipleSmudgesConcurrently()
@@ -399,7 +417,7 @@ namespace LibGit2Sharp.Tests
                 : base(name)
             { }
 
-            protected override MergeStatus Apply(MergeDriverSource source)
+            protected override MergeDriverResult Apply(MergeDriverSource source)
             {
                 throw new NotImplementedException();
             }
@@ -413,9 +431,9 @@ namespace LibGit2Sharp.Tests
         class FakeMergeDriver : MergeDriver
         {
             private readonly Action initCallback;
-            private readonly Func<MergeDriverSource, MergeStatus> applyCallback;
+            private readonly Func<MergeDriverSource, MergeDriverResult> applyCallback;
 
-            public FakeMergeDriver(string name, Action initCallback = null, Func<MergeDriverSource, MergeStatus> applyCallback = null)
+            public FakeMergeDriver(string name, Action initCallback = null, Func<MergeDriverSource, MergeDriverResult> applyCallback = null)
                 : base(name)
             {
                 this.initCallback = initCallback;
@@ -429,11 +447,11 @@ namespace LibGit2Sharp.Tests
                     initCallback();
                 }
             }
-            protected override MergeStatus Apply(MergeDriverSource source)
+            protected override MergeDriverResult Apply(MergeDriverSource source)
             {
                 if (applyCallback != null)
                     return applyCallback(source);
-                return MergeStatus.UpToDate;
+                return new MergeDriverResult { Status = MergeStatus.UpToDate };
             }
         }
     }

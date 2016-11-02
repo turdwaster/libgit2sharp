@@ -244,6 +244,9 @@ namespace LibGit2Sharp.Core
         internal static extern void git_buf_free(GitBuf buf);
 
         [DllImport(libgit2)]
+        internal static extern int git_buf_grow(IntPtr buf, uint target_size);
+
+        [DllImport(libgit2)]
         internal static extern unsafe int git_checkout_tree(
             git_repository* repo,
             git_object* treeish,

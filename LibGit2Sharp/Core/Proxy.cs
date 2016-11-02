@@ -291,6 +291,11 @@ namespace LibGit2Sharp.Core
             NativeMethods.git_buf_free(buf);
         }
 
+        public static int git_buf_grow(IntPtr buf, uint target_size)
+        {
+            return NativeMethods.git_buf_grow(buf, target_size);
+        }
+
         #endregion
 
         #region git_checkout_

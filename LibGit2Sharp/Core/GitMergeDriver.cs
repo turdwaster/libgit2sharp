@@ -45,7 +45,7 @@ namespace LibGit2Sharp.Core
     /// The file source being filtered
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    internal unsafe struct git_merge_driver_source
+    unsafe struct git_merge_driver_source
     {
         public git_repository* repository;
 	    char *default_driver;

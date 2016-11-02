@@ -1,8 +1,28 @@
 ﻿using LibGit2Sharp.Core;
+using LibGit2Sharp.Core.Handles;
 using System;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace LibGit2Sharp
 {
+    /// <summary>
+    /// The result produced when applying a merge driver to conflicting commits
+    /// </summary>
+    public class MergeDriverResult
+    {
+        /// <summary>
+        /// The status of what happened as a result of a merge.
+        /// </summary>
+        public MergeStatus Status;
+
+        /// <summary>
+        /// The resulting stream of data of the merge.
+        /// <para>This will return <code>null</code> if the merge has been unsuccessful due to non-mergeable conflicts.</para>
+        /// </summary>
+        public Stream Content;
+    }
+
     public abstract class MergeDriver : IEquatable<MergeDriver>
     {
         private static readonly LambdaEqualityHelper<MergeDriver> equalityHelper =
@@ -24,7 +44,6 @@ namespace LibGit2Sharp
             {
                 initialize = InitializeCallback,
                 apply = ApplyMergeCallback
-//                apply = StreamCreateCallback,
             };
         }
 
@@ -68,7 +87,7 @@ namespace LibGit2Sharp
         ///
         /// The `src` contains the data about the file to be merged.
         /// </summary>
-        protected abstract MergeStatus Apply(MergeDriverSource source);
+        protected abstract MergeDriverResult Apply(MergeDriverSource source);
 
         /// <summary>
         /// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Filter"/>.
@@ -148,23 +167,43 @@ namespace LibGit2Sharp
             return result;
         }
 
-        int ApplyMergeCallback(IntPtr merge_driver, IntPtr path_out, IntPtr mode_out, IntPtr merged_out, IntPtr filter_name, IntPtr merge_driver_source)
+        unsafe int ApplyMergeCallback(IntPtr merge_driver, IntPtr path_out, IntPtr mode_out, IntPtr merged_out, IntPtr filter_name, IntPtr merge_driver_source)
         {
             MergeDriverSource mergeDriverSource;
             try
             {
                 mergeDriverSource = MergeDriverSource.FromNativePtr(merge_driver_source);
+
                 var result = Apply(mergeDriverSource);
-                //merged_out = result;
-                // TODO: populate merged_out with the results for the apply callback
-                // TODO: return 0 if merge was successful
+
+                if (result.Status == MergeStatus.Conflicts)
+                {
+                    merged_out = IntPtr.Zero;
+                    return (int)GitErrorCode.MergeConflict;
+                }
+
+                var len = (uint)result.Content.Length;
+                Proxy.git_buf_grow(merged_out, len);
+                var buffer = (git_buf*)merged_out.ToPointer();
+                using (var unsafeStream = new UnmanagedMemoryStream((byte*)buffer->ptr.ToPointer(), len, len, FileAccess.Write))
+                {
+                    result.Content.CopyTo(unsafeStream);
+                }
+                buffer->size = len;
+
+                var driver_source = (git_merge_driver_source*)merge_driver_source.ToPointer();
+
+                // TODO: do not hard-code to theirs. use result info.
+                *(char**)path_out.ToPointer() = driver_source->theirs->path;
+
+                // TODO: set mode_out correctly
+                return 0;
             }
             catch(Exception)
             {
+                merged_out = IntPtr.Zero;
                 return (int)GitErrorCode.Invalid;
             }
-
-            return (int)GitErrorCode.MergeConflict;
         }
 
         /// <summary>
