@@ -10,19 +10,21 @@ namespace LibGit2Sharp
     public class MergeDriverSource
     {
         public Repository Repository;
-        public ObjectId AncestorId;
-        public ObjectId OurId;
-        public ObjectId TheirsId;
+        public IndexEntry Ancestor;
+        public IndexEntry Ours;
+        public IndexEntry Theirs;
 
         /// <summary>
         /// Needed for mocking purposes
         /// </summary>
-        protected MergeDriverSource(Repository repos, ObjectId ancestorId, ObjectId oursId, ObjectId theirsId)
+        protected MergeDriverSource() { }
+
+        protected MergeDriverSource(Repository repos, IndexEntry ancestor, IndexEntry ours, IndexEntry theirs)
         {
             Repository = repos;
-            AncestorId = ancestorId;
-            OurId = oursId;
-            TheirsId = theirsId;
+            Ancestor = ancestor;
+            Ours = ours;
+            Theirs = theirs;
         }
 
         /// <summary>
@@ -45,18 +47,11 @@ namespace LibGit2Sharp
             if (ptr == null)
                 throw new ArgumentException();
 
-            var ancestor = ptr->ancestor;
-            var ours = ptr->ours;
-            var theirs = ptr->theirs;
-            var repoPtr = ptr->repository;
-
-            var repo = new Repository(new RepositoryHandle(repoPtr, false));
-
-            var ancestorId = ancestor == null ? null : ObjectId.BuildFromPtr(&ancestor->id);
-            var oursId = ours == null ? null : ObjectId.BuildFromPtr(&ours->id);
-            var theirsId = theirs == null ? null : ObjectId.BuildFromPtr(&theirs->id);
-
-            return new MergeDriverSource(repo, ancestorId, oursId, theirsId);
+            return new MergeDriverSource(
+                new Repository(new RepositoryHandle(ptr->repository, false)),
+                IndexEntry.BuildFromPtr(ptr->ancestor),
+                IndexEntry.BuildFromPtr(ptr->ours),
+                IndexEntry.BuildFromPtr(ptr->theirs));
         }
     }
 }

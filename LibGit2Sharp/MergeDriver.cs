@@ -167,13 +167,12 @@ namespace LibGit2Sharp
             return result;
         }
 
-        unsafe int ApplyMergeCallback(IntPtr merge_driver, IntPtr path_out, IntPtr mode_out, IntPtr merged_out, IntPtr filter_name, IntPtr merge_driver_source)
+        unsafe int ApplyMergeCallback(IntPtr merge_driver, IntPtr path_out, UIntPtr mode_out, IntPtr merged_out, IntPtr filter_name, IntPtr merge_driver_source)
         {
             MergeDriverSource mergeDriverSource;
             try
             {
                 mergeDriverSource = MergeDriverSource.FromNativePtr(merge_driver_source);
-
                 var result = Apply(mergeDriverSource);
 
                 if (result.Status == MergeStatus.Conflicts)
@@ -186,17 +185,32 @@ namespace LibGit2Sharp
                 Proxy.git_buf_grow(merged_out, len);
                 var buffer = (git_buf*)merged_out.ToPointer();
                 using (var unsafeStream = new UnmanagedMemoryStream((byte*)buffer->ptr.ToPointer(), len, len, FileAccess.Write))
-                {
                     result.Content.CopyTo(unsafeStream);
-                }
                 buffer->size = len;
 
+                // Decide which source to use for path_out
                 var driver_source = (git_merge_driver_source*)merge_driver_source.ToPointer();
+                var ancestorPath = mergeDriverSource.Ancestor != null ? mergeDriverSource.Ancestor.Path : null;
+                var oursPath = mergeDriverSource.Ours != null ? mergeDriverSource.Ours.Path : null;
+                var theirsPath = mergeDriverSource.Theirs != null ? mergeDriverSource.Theirs.Path : null;
+                var best = BestPath(ancestorPath, oursPath, theirsPath);
+                // Since there is no memory management of the returned character array 'path_out',
+                // we can only set it to one of the incoming argument strings
+                if (best == null)
+                    *(char**)path_out.ToPointer() = null;
+                if (best == ancestorPath)
+                    *(char**)path_out.ToPointer() = driver_source->ancestor->path;
+                else if (best == oursPath)
+                    *(char**)path_out.ToPointer() = driver_source->ours->path;
+                else if (best == theirsPath)
+                    *(char**)path_out.ToPointer() = driver_source->theirs->path;
 
-                // TODO: do not hard-code to theirs. use result info.
-                *(char**)path_out.ToPointer() = driver_source->theirs->path;
+                // Decide which source to use for mode_out
+                var ancestorMode = mergeDriverSource.Ancestor != null ? mergeDriverSource.Ancestor.Mode : Mode.Nonexistent;
+                var oursMode = mergeDriverSource.Ours != null ? mergeDriverSource.Ours.Mode : Mode.Nonexistent;
+                var theirsMode = mergeDriverSource.Theirs != null ? mergeDriverSource.Theirs.Mode : Mode.Nonexistent;
+                *(uint*)mode_out.ToPointer() = (uint)BestMode(ancestorMode, oursMode, theirsMode);
 
-                // TODO: set mode_out correctly
                 return 0;
             }
             catch(Exception)
@@ -204,6 +218,43 @@ namespace LibGit2Sharp
                 merged_out = IntPtr.Zero;
                 return (int)GitErrorCode.Invalid;
             }
+        }
+
+        private string BestPath(string ancestor, string ours, string theirs)
+        {
+            if (ancestor == null)
+            {
+                if (ours != null && theirs != null && ours == theirs)
+                    return ours;
+                return null;
+            }
+
+            if (ours != null && ancestor == ours)
+                return theirs;
+            if (theirs != null && ancestor == theirs)
+                return ours;
+
+            return null;
+        }
+
+        private Mode BestMode(Mode ancestor, Mode ours, Mode theirs)
+        {
+            if (ancestor == Mode.Nonexistent)
+            {
+                if (ours == Mode.ExecutableFile ||
+                    theirs == Mode.ExecutableFile)
+                    return Mode.ExecutableFile;
+
+                return Mode.NonExecutableFile;
+            }
+            else if (ours != Mode.Nonexistent && theirs != Mode.Nonexistent)
+            {
+                if (ancestor == ours)
+                    return theirs;
+                return ours;
+            }
+
+            return Mode.Nonexistent;
         }
 
         /// <summary>

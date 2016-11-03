@@ -34,7 +34,7 @@ namespace LibGit2Sharp.Core
         internal delegate int git_merge_driver_apply_fn(
             IntPtr merge_driver,
             IntPtr path_out,
-            IntPtr mode_out,
+            UIntPtr mode_out,
             IntPtr merged_out,// GitBuf merged_out,
             IntPtr filter_name,
             IntPtr merge_driver_source // const git_merge_driver_source *src

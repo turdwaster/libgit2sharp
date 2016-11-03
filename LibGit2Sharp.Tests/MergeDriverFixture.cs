@@ -69,7 +69,7 @@ namespace LibGit2Sharp.Tests
             Func<MergeDriverSource, MergeDriverResult> apply = (source) =>
             {
                 called = true;
-                return new MergeDriverResult { Status = MergeStatus.UpToDate };
+                return new MergeDriverResult { Status = MergeStatus.Conflicts };
             };
 
             var mergeDriver = new FakeMergeDriver(MergeDriverName, applyCallback: apply);
@@ -118,7 +118,7 @@ namespace LibGit2Sharp.Tests
             Func <MergeDriverSource, MergeDriverResult> apply = (source) =>
             {
                 var repos = source.Repository;
-                var blob = repos.Lookup<Blob>(source.TheirsId);
+                var blob = repos.Lookup<Blob>(source.Theirs.Id);
                 var content = blob.GetContentStream();
                 return new MergeDriverResult { Status = MergeStatus.UpToDate, Content = content };
             };
