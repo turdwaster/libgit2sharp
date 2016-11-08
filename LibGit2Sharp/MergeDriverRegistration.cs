@@ -46,10 +46,6 @@ namespace LibGit2Sharp
         /// The name of the driver in the libgit2 registry
         /// </summary>
         public string Name { get { return MergeDriver.Name; } }
-        /// <summary>
-        /// The priority of the registered filter
-        /// </summary>
-        public readonly int Priority;
 
         private readonly IntPtr MergeDriverPointer;
 
