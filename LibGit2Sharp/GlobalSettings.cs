@@ -388,7 +388,7 @@ namespace LibGit2Sharp
         {
             Ensure.ArgumentNotNull(registration, "registration");
 
-            lock (registeredFilters)
+            lock (registeredMergeDrivers)
             {
                 var driver = registration.MergeDriver;
 
