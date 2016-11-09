@@ -302,10 +302,10 @@ namespace LibGit2Sharp.Tests
         //{
         //    Assert.Equal(0, GlobalSettings.GetRegisteredMergeDrivers().Count());
 
-        //    var filter = new EmptyMergeDriver(MergeDriverName, attributes);
-        //    var registration = GlobalSettings.RegisterMergeDriver(filter);
+        //    var mergeDriver = new EmptyMergeDriver(MergeDriverName, attributes);
+        //    var registration = GlobalSettings.RegisterMergeDriver(mergeDriver);
 
-        //    Assert.Throws<EntryExistsException>(() => { GlobalSettings.RegisterMergeDriver(filter); });
+        //    Assert.Throws<EntryExistsException>(() => { GlobalSettings.RegisterMergeDriver(mergeDriver); });
         //    Assert.Equal(1, GlobalSettings.GetRegisteredMergeDrivers().Count());
 
         //    Assert.True(registration.IsValid, "MergeDriverRegistration.IsValid should be true.");

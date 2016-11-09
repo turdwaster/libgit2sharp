@@ -24,22 +24,22 @@ namespace LibGit2Sharp
             Proxy.git_merge_driver_register(driver.Name, MergeDriverPointer);
         }
         /// <summary>
-        /// Finalizer called by the <see cref="GC"/>, deregisters and frees native memory associated with the registered filter in libgit2.
+        /// Finalizer called by the <see cref="GC"/>, deregisters and frees native memory associated with the registered merge driver in libgit2.
         /// </summary>
         ~MergeDriverRegistration()
         {
-            // deregister the filter
+            // deregister the merge driver
             GlobalSettings.DeregisterMergeDriver(this);
             // clean up native allocations
             Free();
         }
 
         /// <summary>
-        /// Gets if the registration and underlying filter are valid.
+        /// Gets if the registration and underlying merge driver are valid.
         /// </summary>
         public bool IsValid { get { return !freed; } }
         /// <summary>
-        /// The registerd filters
+        /// The registerd merge drivers
         /// </summary>
         public readonly MergeDriver MergeDriver;
         /// <summary>
@@ -55,7 +55,7 @@ namespace LibGit2Sharp
         {
             if (!freed)
             {
-                // unregister the filter with the native libary
+                // unregister the merge driver with the native libary
                 Proxy.git_merge_driver_unregister(MergeDriver.Name);
                 // release native memory
                 Marshal.FreeHGlobal(MergeDriverPointer);

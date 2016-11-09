@@ -2,7 +2,6 @@
 using LibGit2Sharp.Core.Handles;
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace LibGit2Sharp
 {
@@ -31,9 +30,9 @@ namespace LibGit2Sharp
         private const int BufferSize = 64 * 1024;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Filter"/> class.
-        /// And allocates the filter natively.
-        /// <param name="name">The unique name with which this filtered is registered with</param>
+        /// Initializes a new instance of the <see cref="MergeDriver"/> class.
+        /// And allocates the merge driver natively.
+        /// <param name="name">The unique name with which this merge driver is registered with</param>
         /// </summary>
         protected MergeDriver(string name)
         {
@@ -82,7 +81,7 @@ namespace LibGit2Sharp
         /// and the file will remain conflicted.  Any other errors will fail and
         /// return to the caller.
         ///
-        /// The `filter_name` contains the name of the filter that was invoked, as
+        /// The `driver_name` contains the name of the merge driver that was invoked, as
         /// specified by the file's attributes.
         ///
         /// The `src` contains the data about the file to be merged.
@@ -90,20 +89,20 @@ namespace LibGit2Sharp
         protected abstract MergeDriverResult Apply(MergeDriverSource source);
 
         /// <summary>
-        /// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Filter"/>.
+        /// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="MergeDriver"/>.
         /// </summary>
-        /// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Filter"/>.</param>
-        /// <returns>True if the specified <see cref="Object"/> is equal to the current <see cref="Filter"/>; otherwise, false.</returns>
+        /// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="MergeDriver"/>.</param>
+        /// <returns>True if the specified <see cref="Object"/> is equal to the current <see cref="MergeDriver"/>; otherwise, false.</returns>
         public override bool Equals(object obj)
         {
             return Equals(obj as MergeDriver);
         }
 
         /// <summary>
-        /// Determines whether the specified <see cref="Filter"/> is equal to the current <see cref="Filter"/>.
+        /// Determines whether the specified <see cref="MergeDriver"/> is equal to the current <see cref="MergeDriver"/>.
         /// </summary>
-        /// <param name="other">The <see cref="Filter"/> to compare with the current <see cref="Filter"/>.</param>
-        /// <returns>True if the specified <see cref="Filter"/> is equal to the current <see cref="Filter"/>; otherwise, false.</returns>
+        /// <param name="other">The <see cref="MergeDriver"/> to compare with the current <see cref="MergeDriver"/>.</param>
+        /// <returns>True if the specified <see cref="MergeDriver"/> is equal to the current <see cref="MergeDriver"/>; otherwise, false.</returns>
         public bool Equals(MergeDriver other)
         {
             return equalityHelper.Equals(this, other);
@@ -119,7 +118,7 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
-        /// Tests if two <see cref="Filter"/> are equal.
+        /// Tests if two <see cref="MergeDriver"/> are equal.
         /// </summary>
         /// <param name="left">First <see cref="MergeDriver"/> to compare.</param>
         /// <param name="right">Second <see cref="MergeDriver"/> to compare.</param>
@@ -130,7 +129,7 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
-        /// Tests if two <see cref="Filter"/> are different.
+        /// Tests if two <see cref="MergeDriver"/> are different.
         /// </summary>
         /// <param name="left">First <see cref="MergeDriver"/> to compare.</param>
         /// <param name="right">Second <see cref="MergeDriver"/> to compare.</param>
@@ -141,14 +140,14 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
-        /// Initialize callback on filter
+        /// Initialize callback on merge
         ///
-        /// Specified as `filter.initialize`, this is an optional callback invoked
-        /// before a filter is first used.  It will be called once at most.
+        /// Specified as `driver.initialize`, this is an optional callback invoked
+        /// before a merge driver is first used.  It will be called once at most.
         ///
-        /// If non-NULL, the filter's `initialize` callback will be invoked right
-        /// before the first use of the filter, so you can defer expensive
-        /// initialization operations (in case libgit2 is being used in a way that doesn't need the filter).
+        /// If non-NULL, the merge driver's `initialize` callback will be invoked right
+        /// before the first use of the merge driver, so you can defer expensive
+        /// initialization operations (in case libgit2 is being used in a way that doesn't need the merge driver).
         /// </summary>
         int InitializeCallback(IntPtr mergeDriverPointer)
         {
@@ -159,15 +158,15 @@ namespace LibGit2Sharp
             }
             catch (Exception exception)
             {
-                Log.Write(LogLevel.Error, "Filter.InitializeCallback exception");
+                Log.Write(LogLevel.Error, "MergeDriver.InitializeCallback exception");
                 Log.Write(LogLevel.Error, exception.ToString());
-                Proxy.giterr_set_str(GitErrorCategory.Filter, exception);
+                Proxy.giterr_set_str(GitErrorCategory.MergeDriver, exception);
                 result = (int)GitErrorCode.Error;
             }
             return result;
         }
 
-        unsafe int ApplyMergeCallback(IntPtr merge_driver, IntPtr path_out, UIntPtr mode_out, IntPtr merged_out, IntPtr filter_name, IntPtr merge_driver_source)
+        unsafe int ApplyMergeCallback(IntPtr merge_driver, IntPtr path_out, UIntPtr mode_out, IntPtr merged_out, IntPtr driver_name, IntPtr merge_driver_source)
         {
             MergeDriverSource mergeDriverSource;
             try

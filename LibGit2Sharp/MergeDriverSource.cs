@@ -5,7 +5,7 @@ using LibGit2Sharp.Core.Handles;
 namespace LibGit2Sharp
 {
     /// <summary>
-    /// A filter source - describes the direction of filtering and the file being filtered.
+    /// A merge driver source - describes the direction of merging and the file being merged.
     /// </summary>
     public class MergeDriverSource
     {
@@ -28,7 +28,7 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
-        /// Take an unmanaged pointer and convert it to filter source callback paramater
+        /// Take an unmanaged pointer and convert it to a merge driver source callback paramater
         /// </summary>
         /// <param name="ptr"></param>
         /// <returns></returns>
@@ -38,7 +38,7 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
-        /// Take an unmanaged pointer and convert it to filter source callback paramater
+        /// Take an unmanaged pointer and convert it to a merge driver source callback paramater
         /// </summary>
         /// <param name="ptr"></param>
         /// <returns></returns>

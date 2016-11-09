@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace LibGit2Sharp.Core
 {
@@ -36,13 +33,13 @@ namespace LibGit2Sharp.Core
             IntPtr path_out,
             UIntPtr mode_out,
             IntPtr merged_out,// GitBuf merged_out,
-            IntPtr filter_name,
+            IntPtr driver_name,
             IntPtr merge_driver_source // const git_merge_driver_source *src
         );
     }
 
     /// <summary>
-    /// The file source being filtered
+    /// The file source being merged
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     unsafe struct git_merge_driver_source

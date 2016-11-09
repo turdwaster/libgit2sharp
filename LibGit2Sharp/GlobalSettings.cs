@@ -307,7 +307,7 @@ namespace LibGit2Sharp
 
             lock (registeredMergeDrivers)
             {
-                // if the filter has already been registered
+                // if the merge driver has already been registered
                 if (registeredMergeDrivers.ContainsKey(mergeDriver))
                 {
                     throw new EntryExistsException("The merge driver has already been registered.", GitErrorCode.Exists, GitErrorCategory.MergeDriver);
@@ -315,7 +315,7 @@ namespace LibGit2Sharp
 
                 // allocate the registration object
                 var registration = new MergeDriverRegistration(mergeDriver);
-                // add the filter and registration object to the global tracking list
+                // add the merge driver and registration object to the global tracking list
                 registeredMergeDrivers.Add(mergeDriver, registration);
                 return registration;
             }
@@ -392,7 +392,7 @@ namespace LibGit2Sharp
             {
                 var driver = registration.MergeDriver;
 
-                // do nothing if the filter isn't registered
+                // do nothing if the merge driver isn't registered
                 if (registeredMergeDrivers.ContainsKey(driver))
                 {
                     // remove the register from the global tracking list
@@ -407,11 +407,11 @@ namespace LibGit2Sharp
         {
             System.Diagnostics.Debug.Assert(driver != null);
 
-            // do nothing if the filter isn't registered
+            // do nothing if the merge driver isn't registered
             if (registeredMergeDrivers.ContainsKey(driver))
             {
                 var registration = registeredMergeDrivers[driver];
-                // unregister the filter
+                // unregister the merge driver
                 DeregisterMergeDriver(registration);
             }
         }
