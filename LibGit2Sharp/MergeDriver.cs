@@ -180,12 +180,12 @@ namespace LibGit2Sharp
                     return (int)GitErrorCode.MergeConflict;
                 }
 
-                var len = (uint)result.Content.Length;
-                Proxy.git_buf_grow(merged_out, len);
+                var len = result.Content.Length;
+                Proxy.git_buf_grow(merged_out, (uint)len);
                 var buffer = (git_buf*)merged_out.ToPointer();
                 using (var unsafeStream = new UnmanagedMemoryStream((byte*)buffer->ptr.ToPointer(), len, len, FileAccess.Write))
                     result.Content.CopyTo(unsafeStream);
-                buffer->size = len;
+                buffer->size = (UIntPtr)len;
 
                 // Decide which source to use for path_out
                 var driver_source = (git_merge_driver_source*)merge_driver_source.ToPointer();
@@ -212,7 +212,7 @@ namespace LibGit2Sharp
 
                 return 0;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 merged_out = IntPtr.Zero;
                 return (int)GitErrorCode.Invalid;
@@ -259,7 +259,7 @@ namespace LibGit2Sharp
         /// <summary>
         /// The marshalled merge driver
         /// </summary>
-        internal GitMergeDriver GitMergeDriver { get; private set;}
+        internal GitMergeDriver GitMergeDriver { get; private set; }
 
         /// <summary>
         /// The name that this merge driver was registered with

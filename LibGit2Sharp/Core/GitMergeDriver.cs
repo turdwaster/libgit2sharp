@@ -28,13 +28,15 @@ namespace LibGit2Sharp.Core
 
         internal delegate int git_merge_driver_init_fn(IntPtr merge_driver);
         internal delegate void git_merge_driver_shutdown_fn(IntPtr merge_driver);
+
+        /** Called when the merge driver is invoked due to a file level merge conflict. */
         internal delegate int git_merge_driver_apply_fn(
             IntPtr merge_driver,
             IntPtr path_out,
             UIntPtr mode_out,
-            IntPtr merged_out,// GitBuf merged_out,
+            IntPtr merged_out,
             IntPtr driver_name,
-            IntPtr merge_driver_source // const git_merge_driver_source *src
+            IntPtr merge_driver_source
         );
     }
 

@@ -20,7 +20,7 @@ namespace LibGit2Sharp.Core.Handles
     unsafe struct git_buf
     {
         public IntPtr ptr;
-        public uint asize;
-        public uint size;
+        public UIntPtr asize;
+        public UIntPtr size;
     }
 }
