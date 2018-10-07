@@ -25,6 +25,9 @@ namespace LibGit2Sharp.Core
         private static NativeShutdownObject shutdownObject;
 #pragma warning restore 0414
 
+        private static SmartSubtransportRegistration<ManagedHttpSmartSubtransport> httpSubtransportRegistration;
+        private static SmartSubtransportRegistration<ManagedHttpSmartSubtransport> httpsSubtransportRegistration;
+
         static NativeMethods()
         {
             if (Platform.IsRunningOnNetFramework() || Platform.IsRunningOnNetCore())
@@ -79,10 +82,11 @@ namespace LibGit2Sharp.Core
                 shutdownObject = new NativeShutdownObject();
             }
 
-            // Configure the OpenSSL locking on the first initialization of the library in the current process.
+            // Configure the .NET HTTP(S) mechanism on the first initialization of the library in the current process.
             if (initCounter == 1)
             {
-                git_openssl_set_locking();
+                httpSubtransportRegistration = GlobalSettings.RegisterSmartSubtransport<ManagedHttpSmartSubtransport>("http");
+                httpsSubtransportRegistration = GlobalSettings.RegisterSmartSubtransport<ManagedHttpSmartSubtransport>("https");
             }
         }
 
@@ -91,6 +95,16 @@ namespace LibGit2Sharp.Core
         {
             ~NativeShutdownObject()
             {
+                if (httpSubtransportRegistration != null)
+                {
+                    GlobalSettings.UnregisterSmartSubtransport(httpSubtransportRegistration);
+                }
+
+                if (httpsSubtransportRegistration != null)
+                {
+                    GlobalSettings.UnregisterSmartSubtransport(httpsSubtransportRegistration);
+                }
+
                 git_libgit2_shutdown();
             }
         }

@@ -168,6 +168,7 @@ namespace LibGit2Sharp.Tests
 
                 if(fastForwardStrategy == FastForwardStrategy.Default || fastForwardStrategy == FastForwardStrategy.FastForwardOnly)
                 {
+
                     Assert.Equal(MergeStatus.FastForward, mergeResult.Status);
                     Assert.Equal(mergeResult.Commit, repo.Branches["refs/remotes/origin/master"].Tip);
                     Assert.Equal(repo.Head.Tip, repo.Branches["refs/remotes/origin/master"].Tip);
