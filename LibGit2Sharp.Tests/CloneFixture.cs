@@ -302,7 +302,7 @@ namespace LibGit2Sharp.Tests
         {
             var scd = BuildSelfCleaningDirectory();
 
-            Assert.Throws<InvalidSpecificationException>(() => Repository.Clone("http://github.com", scd.DirectoryPath));
+            Assert.ThrowsAny<LibGit2SharpException>(() => Repository.Clone("http://github.com", scd.DirectoryPath));
         }
 
         [Theory]
