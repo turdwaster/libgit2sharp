@@ -4,12 +4,15 @@ using System.Runtime.InteropServices;
 
 namespace LibGit2Sharp
 {
+    /// <summary>
+    /// An object representing the registration of a custom merge driver in libgit2
+    /// </summary>
     public sealed class MergeDriverRegistration
     {
         /// <summary>
-        ///
+        /// Construct a registration object for the supplied merge driver
         /// </summary>
-        /// <param name="driver"></param>
+        /// <param name="driver">Driver to use</param>
         internal MergeDriverRegistration(MergeDriver driver)
         {
             System.Diagnostics.Debug.Assert(driver != null);
@@ -23,6 +26,7 @@ namespace LibGit2Sharp
             // register the merge driver with the native libary
             Proxy.git_merge_driver_register(driver.Name, MergeDriverPointer);
         }
+
         /// <summary>
         /// Finalizer called by the <see cref="GC"/>, deregisters and frees native memory associated with the registered merge driver in libgit2.
         /// </summary>
@@ -38,10 +42,12 @@ namespace LibGit2Sharp
         /// Gets if the registration and underlying merge driver are valid.
         /// </summary>
         public bool IsValid { get { return !freed; } }
+
         /// <summary>
         /// The registerd merge drivers
         /// </summary>
         public readonly MergeDriver MergeDriver;
+
         /// <summary>
         /// The name of the driver in the libgit2 registry
         /// </summary>

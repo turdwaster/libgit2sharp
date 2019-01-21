@@ -5,21 +5,36 @@ using LibGit2Sharp.Core.Handles;
 namespace LibGit2Sharp
 {
     /// <summary>
-    /// A merge driver source - describes the direction of merging and the file being merged.
+    /// A merge driver source - describes the direction of merging and the file being merged
     /// </summary>
     public class MergeDriverSource
     {
-        public Repository Repository;
-        public IndexEntry Ancestor;
-        public IndexEntry Ours;
-        public IndexEntry Theirs;
+        /// <summary>
+        /// Repository where merge is taking place
+        /// </summary>
+        public readonly Repository Repository;
+
+        /// <summary>
+        /// Ancestor of merge
+        /// </summary>
+        public readonly IndexEntry Ancestor;
+
+        /// <summary>
+        /// Own changes to merge
+        /// </summary>
+        public readonly IndexEntry Ours;
+
+        /// <summary>
+        /// Other changes to merge
+        /// </summary>
+        public readonly IndexEntry Theirs;
 
         /// <summary>
         /// Needed for mocking purposes
         /// </summary>
         protected MergeDriverSource() { }
 
-        protected MergeDriverSource(Repository repos, IndexEntry ancestor, IndexEntry ours, IndexEntry theirs)
+        internal MergeDriverSource(Repository repos, IndexEntry ancestor, IndexEntry ours, IndexEntry theirs)
         {
             Repository = repos;
             Ancestor = ancestor;

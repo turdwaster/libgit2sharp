@@ -22,6 +22,9 @@ namespace LibGit2Sharp
         public Stream Content;
     }
 
+    /// <summary>
+    /// Base class for a custom merge driver implementation
+    /// </summary>
     public abstract class MergeDriver : IEquatable<MergeDriver>
     {
         private static readonly LambdaEqualityHelper<MergeDriver> equalityHelper =
